@@ -53,6 +53,37 @@ header p {
     transform: translateY(-5px); /* マウスオーバーで少し浮き上がらせる */
 }
 
+/* ステップヘッダー (ステップごとのトグルボタンを含むエリア) */
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #444444;
+}
+
+.step-header h2 {
+    margin: 0;
+    color: #ffd700;
+}
+
+/* 「すべて表示/非表示」ボタンのスタイル */
+.toggle-all-button {
+    background-color: #5a5a5a;
+    color: #ffffff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s;
+}
+
+.toggle-all-button:hover {
+    background-color: #777777;
+}
+
 /* ヒントのタイトル (ボタン) */
 .hint-title {
     display: block;
@@ -76,25 +107,24 @@ header p {
     color: #ffffff;
 }
 
-/* ヒントの内容エリア */
+/* ヒントの内容エリア - 【重要】完全に非表示にするための修正 */
 .hint-content {
     background-color: #383838;
     color: #e0e0e0;
-    padding: 15px 20px;
+    padding: 0 20px; /* 閉じた状態の縦方向のPaddingを0にする */
+    margin-top: 0;
     border-radius: 5px;
-    border-left: 5px solid #b8860b; /* アクセント */
+    border-left: 5px solid #b8860b; 
     max-height: 0; /* 初期状態で非表示 */
     overflow: hidden;
-    transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
-}
-
-.hint-content p {
-    margin: 5px 0;
+    /* transitionにmargin-topを追加し、開閉時の見た目を滑らかに */
+    transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out, margin-top 0.5s ease-in-out;
 }
 
 .hint-content.active {
     max-height: 500px; /* 適切な最大値に設定 (内容に応じて調整) */
-    padding: 15px 20px;
+    padding: 15px 20px; /* 開いたときにPaddingを適用 */
+    margin-top: 10px; /* 開いたときにマージンを適用 */
 }
 
 /* フッター */
