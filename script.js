@@ -107,22 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetContent = document.getElementById(targetId);
                 const stepDiv = e.currentTarget.closest('.hint-step');
 
-                if (!targetContent) return; // コンテンツが存在しなければ終了
+                if (!targetContent) return; 
 
                 const isCurrentlyActive = targetContent.classList.contains('active');
                 
-                // 他の開いているヒントをすべて閉じる
-                // （自分自身が開いていた場合は、次のステップで閉じる処理をスキップさせる）
-                document.querySelectorAll('.hint-content.active').forEach(openContent => {
-                    // 現在クリックされたコンテンツと同じでなければ閉じる
-                    if (openContent.id !== targetId) {
-                        openContent.classList.remove('active');
-                        document.querySelector(`[data-target="${openContent.id}"]`).setAttribute('aria-expanded', 'false');
-                        openContent.setAttribute('aria-hidden', 'true');
-                    }
-                });
+                // 【★修正点1: 他のヒントを閉じる処理を削除】
+                // 以前あった他のヒントを閉じるための forEach ループを削除しました。
                 
-                // 選択したヒントを開閉する
+                // 【★修正点2: クリックされたヒントをトグル（開閉）する】
                 if (isCurrentlyActive) {
                     // 既に開いている場合: 閉じる
                     targetContent.classList.remove('active');
@@ -135,10 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     targetContent.setAttribute('aria-hidden', 'false');
                 }
 
-                // ボタンの状態を更新
+                // ボタンの状態を更新 (これは一つでも開いていれば「すべて非表示」にするためのロジックで維持)
                 updateToggleAllButton(stepDiv);
             });
         });
+
 
         // 2. ステップ全体トグルイベントリスナー (変更なし)
         document.querySelectorAll('.toggle-all-button').forEach(button => {
