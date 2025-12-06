@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-// クリックイベントの設定 (ステップトグルイベントの追加)
+// クリックイベントの設定
     function setupToggleListeners() {
         // 1. 個別ヒントのトグル処理
         document.querySelectorAll('.hint-title').forEach(button => {
@@ -106,22 +106,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetId = e.currentTarget.dataset.target;
                 const targetContent = document.getElementById(targetId);
                 const stepDiv = e.currentTarget.closest('.hint-step');
+
+                if (!targetContent) return; // コンテンツが存在しなければ終了
+
+                const isCurrentlyActive = targetContent.classList.contains('active');
                 
-                // 他のヒントをすべて閉じるロジック（前のバージョンと同じ）
+                // 他の開いているヒントをすべて閉じる
+                // （自分自身が開いていた場合は、次のステップで閉じる処理をスキップさせる）
                 document.querySelectorAll('.hint-content.active').forEach(openContent => {
-                    openContent.classList.remove('active');
-                    document.querySelector(`[data-target="${openContent.id}"]`).setAttribute('aria-expanded', 'false');
-                    openContent.setAttribute('aria-hidden', 'true');
+                    // 現在クリックされたコンテンツと同じでなければ閉じる
+                    if (openContent.id !== targetId) {
+                        openContent.classList.remove('active');
+                        document.querySelector(`[data-target="${openContent.id}"]`).setAttribute('aria-expanded', 'false');
+                        openContent.setAttribute('aria-hidden', 'true');
+                    }
                 });
                 
-                // 選択したヒントを開く
-                if (targetContent && !targetContent.classList.contains('active')) {
+                // 選択したヒントを開閉する
+                if (isCurrentlyActive) {
+                    // 既に開いている場合: 閉じる
+                    targetContent.classList.remove('active');
+                    e.currentTarget.setAttribute('aria-expanded', 'false');
+                    targetContent.setAttribute('aria-hidden', 'true');
+                } else {
+                    // 閉じている場合: 開く
                     targetContent.classList.add('active');
                     e.currentTarget.setAttribute('aria-expanded', 'true');
                     targetContent.setAttribute('aria-hidden', 'false');
                 }
 
-                // 【★追加修正：ボタンの状態を更新】
+                // ボタンの状態を更新
                 updateToggleAllButton(stepDiv);
             });
         });
