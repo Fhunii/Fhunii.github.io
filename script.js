@@ -98,61 +98,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // クリックイベントの設定 (ステップトグルイベントの追加)
+// クリックイベントの設定 (ステップトグルイベントの追加)
     function setupToggleListeners() {
-        // 1. 個別ヒントのトグル処理 (前回のロジックを維持)
+        // 1. 個別ヒントのトグル処理
         document.querySelectorAll('.hint-title').forEach(button => {
             button.addEventListener('click', (e) => {
                 const targetId = e.currentTarget.dataset.target;
                 const targetContent = document.getElementById(targetId);
-
-                if (targetContent) {
-                    const isExpanded = targetContent.classList.contains('active');
-                    
-                    // 個別ヒントを開くときは、他の開いているヒントをすべて閉じる
-                    document.querySelectorAll('.hint-content.active').forEach(openContent => {
-                        openContent.classList.remove('active');
-                        document.querySelector(`[data-target="${openContent.id}"]`).setAttribute('aria-expanded', 'false');
-                        openContent.setAttribute('aria-hidden', 'true');
-                    });
-
-                    if (!isExpanded) {
-                        // 選択したヒントを開く
-                        targetContent.classList.add('active');
-                        e.currentTarget.setAttribute('aria-expanded', 'true');
-                        targetContent.setAttribute('aria-hidden', 'false');
-                    }
-
-                    // 個別のヒントが開閉した際、親ステップのトグルボタンの状態を「すべて表示」に戻す
-                    const stepDiv = e.currentTarget.closest('.hint-step');
-                    const toggleAllButton = stepDiv.querySelector('.toggle-all-button');
-                    if (toggleAllButton) {
-                        toggleAllButton.textContent = 'すべて表示';
-                    }
+                const stepDiv = e.currentTarget.closest('.hint-step');
+                
+                // 他のヒントをすべて閉じるロジック（前のバージョンと同じ）
+                document.querySelectorAll('.hint-content.active').forEach(openContent => {
+                    openContent.classList.remove('active');
+                    document.querySelector(`[data-target="${openContent.id}"]`).setAttribute('aria-expanded', 'false');
+                    openContent.setAttribute('aria-hidden', 'true');
+                });
+                
+                // 選択したヒントを開く
+                if (targetContent && !targetContent.classList.contains('active')) {
+                    targetContent.classList.add('active');
+                    e.currentTarget.setAttribute('aria-expanded', 'true');
+                    targetContent.setAttribute('aria-hidden', 'false');
                 }
+
+                // 【★追加修正：ボタンの状態を更新】
+                updateToggleAllButton(stepDiv);
             });
         });
 
-        // 2. ステップ全体トグルイベントリスナー
+        // 2. ステップ全体トグルイベントリスナー (変更なし)
         document.querySelectorAll('.toggle-all-button').forEach(button => {
             button.addEventListener('click', (e) => {
                 const stepDiv = e.currentTarget.closest('.hint-step');
-                
-                // 現在のボタンのテキストを確認して、開くか閉じるかを決定
                 const isClosing = e.currentTarget.textContent === 'すべて非表示';
 
                 stepDiv.querySelectorAll('.hint-title').forEach(titleButton => {
-                    const targetId = titleButton.dataset.target;
-                    const targetContent = document.getElementById(targetId);
+                    const targetContent = document.getElementById(titleButton.dataset.target);
 
                     if (targetContent) {
                         if (isClosing) {
-                            // すべて閉じる
                             targetContent.classList.remove('active');
                             titleButton.setAttribute('aria-expanded', 'false');
                             targetContent.setAttribute('aria-hidden', 'true');
                         } else {
-                            // すべて開く
                             targetContent.classList.add('active');
                             titleButton.setAttribute('aria-expanded', 'true');
                             targetContent.setAttribute('aria-hidden', 'false');
@@ -164,6 +152,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.currentTarget.textContent = isClosing ? 'すべて表示' : 'すべて非表示';
             });
         });
+    }
+
+    // 【★新規追加関数：ボタンの状態を更新する関数】
+    function updateToggleAllButton(stepDiv) {
+        const toggleAllButton = stepDiv.querySelector('.toggle-all-button');
+        if (!toggleAllButton) return;
+        
+        // ステップ内のヒントコンテンツをすべてチェック
+        const activeContents = stepDiv.querySelectorAll('.hint-content.active');
+
+        if (activeContents.length > 0) {
+            // 一つでも開いていれば「すべて非表示」
+            toggleAllButton.textContent = 'すべて非表示';
+        } else {
+            // 全て閉じていれば「すべて表示」
+            toggleAllButton.textContent = 'すべて表示';
+        }
     }
 
     loadHints();
