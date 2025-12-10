@@ -12,11 +12,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // ヒントをステップごとにグループ化
             const groupedHints = hints.reduce((acc, hint) => {
-                const stepKey = `ステップ ${hint.Step}`;
+                // Step番号をキーとして使用
+                const stepKey = hint.Step;
                 if (!acc[stepKey]) {
-                    acc[stepKey] = [];
+                    // 【★修正点1: グループ初期化時にStepTitleを保存】
+                    acc[stepKey] = {
+                        title: hint.StepTitle || `ステップ ${hint.Step}`, // StepTitleが空でなければ使用
+                        hints: []
+                    };
                 }
-                acc[stepKey].push(hint);
+                acc[stepKey].hints.push(hint);
                 return acc;
             }, {});
 
@@ -62,7 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // ステップタイトル
             const stepTitle = document.createElement('h2');
-            stepTitle.textContent = stepKey;
+            // 【★修正点2: groupedHintsオブジェクトからカスタムタイトルを使用】
+            stepTitle.textContent = stepGroup.title; 
             stepHeader.appendChild(stepTitle);
 
             // 「すべて表示/非表示」ボタン
