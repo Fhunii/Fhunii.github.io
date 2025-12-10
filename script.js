@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const csvFilePath = 'hintdata.csv';
+    const csvFilePath = '/hintdata.csv';
     const container = document.getElementById('hint-container');
 
     // CSVファイルを読み込む関数
