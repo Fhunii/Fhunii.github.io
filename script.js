@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const csvFilePath = '/hintdata.csv';
+    // 【修正点】絶対パスを使用し、GitHub Pagesでの読み込み安定性を確保
+    const csvFilePath = '/hintdata.csv'; 
     const container = document.getElementById('hint-container');
 
     // CSVファイルを読み込む関数
@@ -12,15 +13,22 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // ヒントをステップごとにグループ化
             const groupedHints = hints.reduce((acc, hint) => {
-                // Step番号をキーとして使用
                 const stepKey = hint.Step;
+                
                 if (!acc[stepKey]) {
-                    // 【★修正点1: グループ初期化時にStepTitleを保存】
+                    // グループ初期化: StepTitleが定義されているかチェック
+                    // StepTitleが空でなければそのタイトルを使用し、そうでなければデフォルトを使用
+                    const title = hint.StepTitle || `ステップ ${hint.Step}`;
+                    
                     acc[stepKey] = {
-                        title: hint.StepTitle || `ステップ ${hint.Step}`, // StepTitleが空でなければ使用
+                        title: title,
                         hints: []
                     };
                 }
+                
+                // 【重要】StepTitleが空欄でない場合は、グループ化の際にStepTitleを上書きしないようにする
+                // ただし、CSVでは最初の行にのみタイトルが設定されている前提なので、このロジックでOK。
+
                 acc[stepKey].hints.push(hint);
                 return acc;
             }, {});
@@ -33,31 +41,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('ヒントデータの読み込み中にエラーが発生しました:', error);
-            container.innerHTML = '<p style="color: red;">ヒントデータを読み込めませんでした。</p>';
+            // ユーザーにエラーを伝えるメッセージ
+            container.innerHTML = '<p style="color: red;">ヒントデータを読み込めませんでした。ファイルパスとCSVの内容を確認してください。</p>';
         }
     }
 
     // CSVパースの簡易実装 (変更なし)
     function parseCSV(text) {
         const lines = text.trim().split('\n');
+        // ヘッダー行をスキップ
         const headers = lines[0].split(',');
         
         return lines.slice(1).map(line => {
             const values = line.split(',');
             let obj = {};
             headers.forEach((header, i) => {
-                obj[header.trim()] = values[i].trim();
+                // CSVの各値をトリムしてオブジェクトに格納
+                obj[header.trim()] = (values[i] || '').trim().replace(/^"|"$/g, ''); // 引用符を除去
             });
             return obj;
         });
     }
 
-    // HTMLのレンダリング (ステップトグルボタンの追加)
+    // HTMLのレンダリング (ステップタイトルとヒントコンテンツの挿入)
     function renderHints(groupedHints, container) {
         for (const stepKey in groupedHints) {
-            const stepData = groupedHints[stepKey];
+            const stepGroup = groupedHints[stepKey];
+            const stepData = stepGroup.hints;
             
-            // ステップコンテナの作成
             const stepDiv = document.createElement('div');
             stepDiv.className = 'hint-step';
             
@@ -65,9 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const stepHeader = document.createElement('div');
             stepHeader.className = 'step-header';
             
-            // ステップタイトル
+            // ステップタイトル (カスタムタイトルを使用)
             const stepTitle = document.createElement('h2');
-            // 【★修正点2: groupedHintsオブジェクトからカスタムタイトルを使用】
             stepTitle.textContent = stepGroup.title; 
             stepHeader.appendChild(stepTitle);
 
@@ -75,13 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const toggleAllButton = document.createElement('button');
             toggleAllButton.textContent = 'すべて表示';
             toggleAllButton.className = 'toggle-all-button';
-            toggleAllButton.dataset.targetStep = stepKey; // ステップを識別するキー
+            toggleAllButton.dataset.targetStep = stepKey; 
             stepHeader.appendChild(toggleAllButton);
 
             stepDiv.appendChild(stepHeader);
             // ===============================================
 
-            // 各ヒントの要素を作成
             stepData.forEach(hint => {
                 // ヒントのタイトルボタン
                 const titleButton = document.createElement('button');
@@ -95,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const contentDiv = document.createElement('div');
                 contentDiv.id = `content-s${hint.Step}-h${hint.HintID}`;
                 contentDiv.className = 'hint-content';
+                // 【重要】改行タグや画像タグを含むため、innerHTMLを使用
                 contentDiv.innerHTML = `<p>${hint.Content}</p>`;
                 contentDiv.setAttribute('aria-hidden', 'true');
                 stepDiv.appendChild(contentDiv);
@@ -104,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-// クリックイベントの設定
+    // クリックイベントの設定 (複数同時開閉、再クリックで閉じるロジック)
     function setupToggleListeners() {
         // 1. 個別ヒントのトグル処理
         document.querySelectorAll('.hint-title').forEach(button => {
@@ -117,10 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isCurrentlyActive = targetContent.classList.contains('active');
                 
-                // 【★修正点1: 他のヒントを閉じる処理を削除】
-                // 以前あった他のヒントを閉じるための forEach ループを削除しました。
-                
-                // 【★修正点2: クリックされたヒントをトグル（開閉）する】
+                // クリックされたヒントをトグル（開閉）する
                 if (isCurrentlyActive) {
                     // 既に開いている場合: 閉じる
                     targetContent.classList.remove('active');
@@ -133,11 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     targetContent.setAttribute('aria-hidden', 'false');
                 }
 
-                // ボタンの状態を更新 (これは一つでも開いていれば「すべて非表示」にするためのロジックで維持)
+                // ボタンの状態を更新
                 updateToggleAllButton(stepDiv);
             });
         });
-
 
         // 2. ステップ全体トグルイベントリスナー (変更なし)
         document.querySelectorAll('.toggle-all-button').forEach(button => {
@@ -167,12 +173,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 【★新規追加関数：ボタンの状態を更新する関数】
+    // ボタンの状態を更新する関数 (変更なし)
     function updateToggleAllButton(stepDiv) {
         const toggleAllButton = stepDiv.querySelector('.toggle-all-button');
         if (!toggleAllButton) return;
         
-        // ステップ内のヒントコンテンツをすべてチェック
         const activeContents = stepDiv.querySelectorAll('.hint-content.active');
 
         if (activeContents.length > 0) {
